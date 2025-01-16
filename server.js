@@ -13,7 +13,10 @@ dotenv.config();
 
 const app = express();
 const server = http.createServer(app);
-const wss = new WebSocket.Server({ server });
+const wss = new WebSocket.Server({ 
+  server,
+  path: '/ws'
+});
 
 app.use(cors());
 app.use(express.json());
@@ -184,8 +187,17 @@ wss.on('connection', (ws) => {
     ws.on('error', console.error);
 });
 
+// Health check endpoint for WP Engine
+app.get('/health', (req, res) => {
+    res.status(200).send('OK');
+});
+
 // Serve React app - must be after API routes
 app.get('*', (req, res) => {
+    // Ensure proper headers for secure connections
+    if (req.headers['x-forwarded-proto'] === 'https') {
+        res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+    }
     res.sendFile(path.join(__dirname, 'frontend/dist/index.html'));
 });
 
