@@ -1,6 +1,6 @@
 import { Routes, Route, Link } from 'react-router-dom';
 import { AppBar, Box, Container, Drawer, List, ListItem, ListItemIcon, ListItemText, Toolbar, Typography } from '@mui/material';
-import { Settings, Assessment, PlayArrow, CheckCircle, Home } from '@mui/icons-material';
+import { Settings, Assessment, PlayArrow, CheckCircle, Home, Transform } from '@mui/icons-material';
 
 // Import all pages from the barrel export
 import { 
@@ -8,7 +8,8 @@ import {
   ConfigPage,
   MigrationPage,
   ApprovalPage,
-  StatusPage 
+  StatusPage,
+  TransformationPage
 } from './pages';
 
 const drawerWidth = 240;
@@ -17,6 +18,7 @@ function App() {
   const menuItems = [
     { text: 'Home', icon: <Home />, path: '/' },
     { text: 'Configuration', icon: <Settings />, path: '/config' },
+    { text: 'Transform', icon: <Transform />, path: '/transform' },
     { text: 'Migration', icon: <PlayArrow />, path: '/migration' },
     { text: 'Approval', icon: <CheckCircle />, path: '/approval' },
     { text: 'Status', icon: <Assessment />, path: '/status' }
@@ -68,6 +70,7 @@ function App() {
           <Routes>
             <Route path="/" element={<LandingPage />} />
             <Route path="/config" element={<ConfigPage />} />
+            <Route path="/transform" element={<TransformationPage />} />
             <Route path="/migration" element={<MigrationPage />} />
             <Route path="/approval" element={<ApprovalPage />} />
             <Route path="/status" element={<StatusPage />} />

@@ -4,12 +4,25 @@ const http = require('http');
 const cors = require('cors');
 const path = require('path');
 const dotenv = require('dotenv');
+const multer = require('multer');
+const llmService = require('./llmService');
 const fetchBraintreeData = require('./fetchBraintreeData');
 const analyzeAndCohort = require('./analyzeAndCohort');
 const mapAndTransform = require('./mapAndTransform');
 const writeToNetSuite = require('./writeToNetSuite');
 
 dotenv.config();
+
+// Initialize LLM service with environment config
+if (process.env.LLM_PROVIDER) {
+  llmService.configure({
+    provider: process.env.LLM_PROVIDER,
+    apiKey: process.env.OPENAI_API_KEY,
+    endpoint: process.env.LLM_ENDPOINT,
+    username: process.env.LLM_USERNAME,
+    password: process.env.LLM_PASSWORD
+  });
+}
 
 const app = express();
 const server = http.createServer(app);
@@ -20,6 +33,9 @@ const wss = new WebSocket.Server({
 
 app.use(cors());
 app.use(express.json());
+
+// Configure multer for file uploads
+const upload = multer({ dest: 'uploads/' });
 
 // Serve static files with proper MIME types
 app.use(express.static(path.join(__dirname, 'frontend/dist'), {
@@ -42,8 +58,8 @@ app.use(express.static(path.join(__dirname, 'frontend/dist'), {
       res.set('Cache-Control', 'public, max-age=31536000');
     }
   },
-  fallthrough: true, // Enable falling through for non-existent files
-  index: false // Disable automatic serving of index.html
+  fallthrough: true,
+  index: false
 }));
 
 // Store migration state
@@ -87,10 +103,93 @@ function updateProgress(progress, step) {
 }
 
 // API Routes
+app.post('/api/suggest-mapping', async (req, res) => {
+  try {
+    const { schema } = req.body;
+
+    // Define NetSuite schema based on record type
+    const netsuiteSchema = {
+      customer: [
+        { name: 'entityId', type: 'string', required: true },
+        { name: 'companyName', type: 'string', required: true },
+        { name: 'email', type: 'string', required: true },
+        { name: 'phone', type: 'string' },
+        { name: 'subsidiary', type: 'reference', required: true },
+        { name: 'currency', type: 'reference', required: true }
+      ],
+      transaction: [
+        { name: 'tranId', type: 'string', required: true },
+        { name: 'customer', type: 'reference', required: true },
+        { name: 'tranDate', type: 'date', required: true },
+        { name: 'amount', type: 'decimal', required: true },
+        { name: 'currency', type: 'reference', required: true },
+        { name: 'status', type: 'string', required: true }
+      ]
+    };
+
+    // Use OpenAI to suggest mappings
+    const prompt = `Given the following source schema fields:
+${JSON.stringify(schema, null, 2)}
+
+And the following NetSuite schema:
+${JSON.stringify(netsuiteSchema, null, 2)}
+
+Suggest field mappings between the source and NetSuite schemas. Consider:
+1. Field name similarities
+2. Data type compatibility
+3. Required fields in NetSuite
+4. Common business logic transformations
+
+Provide the response in this JSON format:
+{
+  "mappings": [
+    {
+      "sourceField": "source_field_name",
+      "targetField": "netsuite_field_name",
+      "transformation": "optional transformation logic"
+    }
+  ]
+}`;
+
+    const response = await llmService.createCompletion(prompt);
+    const suggestedMappings = JSON.parse(response);
+
+    // Determine target schema based on mappings
+    const targetFields = [...new Set(suggestedMappings.mappings.map(m => m.targetField))];
+    const targetSchema = targetFields.map(field => {
+      const schemaField = [...netsuiteSchema.customer, ...netsuiteSchema.transaction]
+        .find(f => f.name === field);
+      return schemaField || { name: field, type: 'string' };
+    });
+
+    res.json({
+      mappings: suggestedMappings.mappings,
+      targetSchema
+    });
+  } catch (error) {
+    console.error('Mapping suggestion error:', error);
+    res.status(500).json({ 
+      error: 'Failed to suggest mappings',
+      details: error.message 
+    });
+  }
+});
+
 app.post('/api/config/validate', async (req, res) => {
-    const { braintree, netsuite, openai } = req.body;
+    const { braintree, netsuite, llm } = req.body;
     try {
-        // Test connections here
+        // Test LLM connection
+        if (llm) {
+            const llmValid = await llmService.validateConfig(llm);
+            if (!llmValid) {
+                throw new Error('Failed to validate LLM configuration');
+            }
+            // Update service configuration if validation succeeds
+            llmService.configure(llm);
+        }
+
+        // TODO: Add Braintree and NetSuite validation
+
         res.json({ success: true });
     } catch (error) {
         res.status(400).json({ 

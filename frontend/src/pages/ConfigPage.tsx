@@ -8,7 +8,11 @@ import {
   CardContent,
   Grid,
   Alert,
-  CircularProgress
+  CircularProgress,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem
 } from '@mui/material';
 import { Save as SaveIcon, Check as CheckIcon } from '@mui/icons-material';
 
@@ -23,8 +27,12 @@ interface ConfigState {
     endpoint: string;
     apiKey: string;
   };
-  openai: {
-    apiKey: string;
+  llm: {
+    provider: string;
+    apiKey?: string;
+    endpoint?: string;
+    username?: string;
+    password?: string;
   };
 }
 
@@ -40,8 +48,12 @@ export default function ConfigPage() {
       endpoint: '',
       apiKey: ''
     },
-    openai: {
-      apiKey: ''
+    llm: {
+      provider: 'openai',
+      apiKey: '',
+      endpoint: '',
+      username: '',
+      password: ''
     }
   });
 
@@ -186,23 +198,67 @@ export default function ConfigPage() {
           </Card>
         </Grid>
 
-        {/* OpenAI Configuration */}
+        {/* LLM Configuration */}
         <Grid item xs={12}>
           <Card>
             <CardContent>
               <Typography variant="h6" gutterBottom>
-                OpenAI Configuration
+                LLM Configuration
               </Typography>
               <Grid container spacing={2}>
-                <Grid item xs={12}>
-                  <TextField
-                    fullWidth
-                    type="password"
-                    label="API Key"
-                    value={config.openai.apiKey}
-                    onChange={(e) => handleChange('openai', 'apiKey', e.target.value)}
-                  />
+                <Grid item xs={12} md={6}>
+                  <FormControl fullWidth>
+                    <InputLabel>Provider</InputLabel>
+                    <Select
+                      value={config.llm.provider}
+                      label="Provider"
+                      onChange={(e) => handleChange('llm', 'provider', e.target.value)}
+                    >
+                      <MenuItem value="openai">OpenAI</MenuItem>
+                      <MenuItem value="custom">Custom LLM API</MenuItem>
+                    </Select>
+                  </FormControl>
                 </Grid>
+                {config.llm.provider === 'openai' ? (
+                  <Grid item xs={12} md={6}>
+                    <TextField
+                      fullWidth
+                      type="password"
+                      label="API Key"
+                      value={config.llm.apiKey}
+                      onChange={(e) => handleChange('llm', 'apiKey', e.target.value)}
+                    />
+                  </Grid>
+                ) : (
+                  <>
+                    <Grid item xs={12} md={6}>
+                      <TextField
+                        fullWidth
+                        label="API Endpoint"
+                        value={config.llm.endpoint}
+                        onChange={(e) => handleChange('llm', 'endpoint', e.target.value)}
+                        placeholder="http://localhost:8000/v1"
+                      />
+                    </Grid>
+                    <Grid item xs={12} md={6}>
+                      <TextField
+                        fullWidth
+                        label="Username"
+                        value={config.llm.username}
+                        onChange={(e) => handleChange('llm', 'username', e.target.value)}
+                      />
+                    </Grid>
+                    <Grid item xs={12} md={6}>
+                      <TextField
+                        fullWidth
+                        type="password"
+                        label="Password/API Key"
+                        value={config.llm.password}
+                        onChange={(e) => handleChange('llm', 'password', e.target.value)}
+                      />
+                    </Grid>
+                  </>
+                )}
               </Grid>
             </CardContent>
           </Card>
