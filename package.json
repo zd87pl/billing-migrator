@@ -6,9 +6,9 @@
   "scripts": {
     "start": "node server.js",
     "dev": "concurrently \"nodemon server.js\" \"cd frontend && npm run start\"",
-    "build": "cd frontend && npm run build",
+    "build": "cd frontend && npm install && npm run build",
     "install-all": "npm install && cd frontend && npm install",
-    "setup": "npm install && cd frontend && npm install && npm run build"
+    "postinstall": "cd frontend && npm install && npm run build"
   },
   "dependencies": {
     "axios": "^1.4.0",
@@ -22,5 +22,8 @@
   "devDependencies": {
     "concurrently": "^9.1.2",
     "nodemon": "^3.0.1"
+  },
+  "engines": {
+    "node": ">=16.0.0"
   }
 }

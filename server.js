@@ -17,7 +17,9 @@ const wss = new WebSocket.Server({ server });
 
 app.use(cors());
 app.use(express.json());
-app.use(express.static(path.join(__dirname, 'frontend/build')));
+
+// Serve static files from the Vite build output directory
+app.use(express.static(path.join(__dirname, 'frontend/dist')));
 
 // Store migration state
 let migrationState = {
@@ -182,9 +184,9 @@ wss.on('connection', (ws) => {
     ws.on('error', console.error);
 });
 
-// Serve React app
+// Serve React app - must be after API routes
 app.get('*', (req, res) => {
-    res.sendFile(path.join(__dirname, 'frontend/build/index.html'));
+    res.sendFile(path.join(__dirname, 'frontend/dist/index.html'));
 });
 
 const PORT = process.env.PORT || 3000;

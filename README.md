@@ -221,12 +221,37 @@ The application uses WebSocket for real-time updates:
 npm run dev
 ```
 
-2. Build for production:
+## Deployment
+
+### WP Engine Atlas
+
+1. Create a new Node.js application in WP Engine Atlas.
+
+2. Connect your GitHub repository to Atlas.
+
+3. Configure environment variables in Atlas:
+   - Add all variables from `.env.example` to your Atlas environment
+   - Ensure all API keys and credentials are properly set
+
+4. Deploy:
+   - The application will automatically build using the following process:
+     1. Install dependencies (npm install)
+     2. Build frontend (postinstall script)
+     3. Start the server (npm start)
+
+5. Verify deployment:
+   - Check Atlas logs for any build or runtime errors
+   - Confirm all environment variables are properly set
+   - Test the application functionality
+
+### Manual Deployment
+
+1. Build for production:
 ```bash
 npm run build
 ```
 
-3. Start production server:
+2. Start production server:
 ```bash
 npm start
 ```
