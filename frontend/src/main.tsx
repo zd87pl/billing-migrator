@@ -5,10 +5,16 @@ import CssBaseline from '@mui/material/CssBaseline';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import App from './App';
 
-// Create dark theme
-const darkTheme = createTheme({
+// Create light theme
+const theme = createTheme({
   palette: {
-    mode: 'dark',
+    mode: 'light',
+    primary: {
+      main: '#2196F3',
+    },
+    background: {
+      default: '#f5f5f5',
+    },
   },
 });
 
@@ -23,7 +29,7 @@ const router = {
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <BrowserRouter future={router.future}>
-      <ThemeProvider theme={darkTheme}>
+      <ThemeProvider theme={theme}>
         <CssBaseline />
         <App />
       </ThemeProvider>

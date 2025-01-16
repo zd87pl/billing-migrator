@@ -1,8 +1,8 @@
-import { defineConfig, ConfigEnv, UserConfig } from 'vite';
+import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import path from 'path';
 
-export default defineConfig(({ mode }: ConfigEnv): UserConfig => ({
+export default defineConfig({
   plugins: [react()],
   server: {
     port: 3001,
@@ -14,25 +14,16 @@ export default defineConfig(({ mode }: ConfigEnv): UserConfig => ({
       }
     }
   },
-  base: mode === 'production' ? '/' : '/',
   build: {
     outDir: 'dist',
-    sourcemap: true,
+    assetsDir: 'assets',
+    manifest: true,
     rollupOptions: {
+      input: path.resolve(__dirname, 'index.html'),
       output: {
-        manualChunks: {
-          vendor: ['react', 'react-dom', 'react-router-dom'],
-          ui: ['@mui/material', '@emotion/react', '@emotion/styled']
-        }
-      }
-    },
-    chunkSizeWarningLimit: 1000,
-    assetsInlineLimit: 4096,
-    minify: 'terser' as const,
-    terserOptions: {
-      compress: {
-        drop_console: true,
-        drop_debugger: true
+        entryFileNames: `assets/[name].[hash].js`,
+        chunkFileNames: `assets/[name].[hash].js`,
+        assetFileNames: `assets/[name].[hash].[ext]`
       }
     }
   },
@@ -41,4 +32,4 @@ export default defineConfig(({ mode }: ConfigEnv): UserConfig => ({
       '@': path.resolve(__dirname, './src')
     }
   }
-}));
+});

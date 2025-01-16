@@ -21,8 +21,30 @@ const wss = new WebSocket.Server({
 app.use(cors());
 app.use(express.json());
 
-// Serve static files from the Vite build output directory
-app.use(express.static(path.join(__dirname, 'frontend/dist')));
+// Serve static files with proper MIME types
+app.use(express.static(path.join(__dirname, 'frontend/dist'), {
+  setHeaders: (res, filePath) => {
+    // Handle all JavaScript file types
+    if (filePath.endsWith('.js') || filePath.endsWith('.mjs') || filePath.endsWith('.jsx')) {
+      res.set('Content-Type', 'application/javascript; charset=utf-8');
+    }
+    // Handle CSS files
+    else if (filePath.endsWith('.css')) {
+      res.set('Content-Type', 'text/css; charset=utf-8');
+    }
+    // Handle source maps
+    else if (filePath.endsWith('.map')) {
+      res.set('Content-Type', 'application/json; charset=utf-8');
+    }
+
+    // Set caching headers for production
+    if (process.env.NODE_ENV === 'production') {
+      res.set('Cache-Control', 'public, max-age=31536000');
+    }
+  },
+  fallthrough: true, // Enable falling through for non-existent files
+  index: false // Disable automatic serving of index.html
+}));
 
 // Store migration state
 let migrationState = {
@@ -198,6 +220,8 @@ app.get('*', (req, res) => {
     if (req.headers['x-forwarded-proto'] === 'https') {
         res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
     }
+    // Set proper content type for HTML
+    res.set('Content-Type', 'text/html; charset=utf-8');
     res.sendFile(path.join(__dirname, 'frontend/dist/index.html'));
 });
 

@@ -13,6 +13,7 @@ import {
   Alert,
   Divider,
   Chip,
+  LinearProgress
 } from '@mui/material';
 import {
   CheckCircle as SuccessIcon,
@@ -48,6 +49,7 @@ export default function StatusPage() {
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [progress, setProgress] = useState(0);
 
   useEffect(() => {
     fetchStatus();
@@ -58,7 +60,16 @@ export default function StatusPage() {
       const data = JSON.parse(event.data);
       if (data.type === 'log') {
         setLogs(prev => [data.data, ...prev].slice(0, 100)); // Keep last 100 logs
+      } else if (data.type === 'progress') {
+        setProgress(data.data.progress);
+      } else if (data.type === 'state') {
+        updateStats(data.data);
       }
+    };
+
+    ws.onerror = (error) => {
+      console.error('WebSocket error:', error);
+      setError('Failed to connect to status updates');
     };
 
     return () => ws.close();
@@ -69,24 +80,26 @@ export default function StatusPage() {
       const response = await fetch('/api/migration/status');
       const data = await response.json();
       
-      setStats({
-        totalItems: data.data?.length || 0,
-        approvedItems: data.approvedItems?.length || 0,
-        pendingItems: (data.data?.length || 0) - (data.approvedItems?.length || 0),
-        failedItems: data.failedItems?.length || 0,
-        lastRun: data.lastRun,
-        currentStatus: data.status,
-      });
-      
+      updateStats(data);
       if (data.logs) {
         setLogs(data.logs);
       }
-      
       setLoading(false);
     } catch (err) {
       setError('Failed to fetch migration status');
       setLoading(false);
     }
+  };
+
+  const updateStats = (data: any) => {
+    setStats({
+      totalItems: data.data?.length || 0,
+      approvedItems: data.approvedItems?.length || 0,
+      pendingItems: (data.data?.length || 0) - (data.approvedItems?.length || 0),
+      failedItems: data.failedItems?.length || 0,
+      lastRun: data.lastRun,
+      currentStatus: data.status,
+    });
   };
 
   if (loading) {
@@ -144,6 +157,24 @@ export default function StatusPage() {
                 )}
               </Box>
 
+              {stats.currentStatus === 'running' && (
+                <Box sx={{ mb: 3 }}>
+                  <LinearProgress 
+                    variant="determinate" 
+                    value={progress} 
+                    sx={{ height: 10, borderRadius: 5 }}
+                  />
+                  <Typography 
+                    variant="body2" 
+                    color="text.secondary" 
+                    align="center"
+                    sx={{ mt: 1 }}
+                  >
+                    {progress}% Complete
+                  </Typography>
+                </Box>
+              )}
+
               <Grid container spacing={2}>
                 <Grid item xs={12} sm={6} md={3}>
                   <Paper sx={{ p: 2, textAlign: 'center' }}>
@@ -199,8 +230,7 @@ export default function StatusPage() {
                 sx={{ 
                   maxHeight: 400, 
                   overflow: 'auto',
-                  bgcolor: '#1a1a1a',
-                  color: '#fff',
+                  bgcolor: '#fafafa'
                 }}
               >
                 <List dense>
@@ -210,25 +240,22 @@ export default function StatusPage() {
                         <ListItemText
                           primary={
                             <Box component="span" sx={{ 
-                              color: log.type === 'error' ? '#ff6b6b' : 
-                                    log.type === 'success' ? '#4caf50' : 
-                                    '#fff'
+                              color: log.type === 'error' ? 'error.main' : 
+                                    log.type === 'success' ? 'success.main' : 
+                                    'text.primary'
                             }}>
                               {log.message}
                             </Box>
                           }
                           secondary={
-                            <Typography 
-                              variant="caption" 
-                              sx={{ color: 'rgba(255,255,255,0.7)' }}
-                            >
+                            <Typography variant="caption" color="text.secondary">
                               {new Date(log.timestamp).toLocaleString()}
                             </Typography>
                           }
                         />
                       </ListItem>
                       {index < logs.length - 1 && (
-                        <Divider sx={{ borderColor: 'rgba(255,255,255,0.1)' }} />
+                        <Divider />
                       )}
                     </Box>
                   ))}
