@@ -1,18 +1,22 @@
 import { Routes, Route, Link } from 'react-router-dom';
 import { AppBar, Box, Container, Drawer, List, ListItem, ListItemIcon, ListItemText, Toolbar, Typography } from '@mui/material';
-import { Settings, Assessment, PlayArrow, CheckCircle } from '@mui/icons-material';
+import { Settings, Assessment, PlayArrow, CheckCircle, Home } from '@mui/icons-material';
 
-// Pages (we'll create these next)
-import ConfigPage from './pages/ConfigPage';
-import MigrationPage from './pages/MigrationPage';
-import ApprovalPage from './pages/ApprovalPage';
-import StatusPage from './pages/StatusPage';
+// Import all pages from the barrel export
+import { 
+  LandingPage,
+  ConfigPage,
+  MigrationPage,
+  ApprovalPage,
+  StatusPage 
+} from './pages';
 
 const drawerWidth = 240;
 
 function App() {
   const menuItems = [
-    { text: 'Configuration', icon: <Settings />, path: '/' },
+    { text: 'Home', icon: <Home />, path: '/' },
+    { text: 'Configuration', icon: <Settings />, path: '/config' },
     { text: 'Migration', icon: <PlayArrow />, path: '/migration' },
     { text: 'Approval', icon: <CheckCircle />, path: '/approval' },
     { text: 'Status', icon: <Assessment />, path: '/status' }
@@ -20,7 +24,13 @@ function App() {
 
   return (
     <Box sx={{ display: 'flex' }}>
-      <AppBar position="fixed" sx={{ zIndex: (theme) => theme.zIndex.drawer + 1 }}>
+      <AppBar 
+        position="fixed" 
+        sx={{ 
+          zIndex: (theme) => theme.zIndex.drawer + 1,
+          background: 'linear-gradient(45deg, #2196F3 30%, #21CBF3 90%)'
+        }}
+      >
         <Toolbar>
           <Typography variant="h6" noWrap component="div">
             Billing Migrator
@@ -56,7 +66,8 @@ function App() {
         <Toolbar />
         <Container maxWidth="lg">
           <Routes>
-            <Route path="/" element={<ConfigPage />} />
+            <Route path="/" element={<LandingPage />} />
+            <Route path="/config" element={<ConfigPage />} />
             <Route path="/migration" element={<MigrationPage />} />
             <Route path="/approval" element={<ApprovalPage />} />
             <Route path="/status" element={<StatusPage />} />
